@@ -23,7 +23,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // Routes
-app.use('/api', gameRoutes);
+app.use('/', gameRoutes);
 
 // Export app
 module.exports = app;
