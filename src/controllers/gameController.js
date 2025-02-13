@@ -1,16 +1,26 @@
 const Game = require("../models/Game");
 const generateEquation = require("../utils/equationGenerator");
 
-// Start a new game
-exports.startGame = async (req, res) => {
-    console.log(req.body);
+exports.startGame = 
+/**
+ * @brief Start a new game 
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns 
+ */
+async (req, res) => {
     const { name, difficulty } = req.body;
 
-    if (!name || difficulty < 1 || difficulty > 4) {
+    if (!name || typeof difficulty !== 'number' || difficulty < 1 || difficulty > 4) {
         return res.status(400).json({ error: "Invalid input" });
     }
 
-    const { question, answer } = generateEquation(difficulty);
+    let question, answer;
+    try {
+        ({ question, answer } = generateEquation(difficulty));
+    } catch (error) {
+        return res.status(400).json({ error: "Failed to generate equation" });
+    }
 
     const game = await Game.create({ name, difficulty, question, answer });
 
@@ -22,51 +32,84 @@ exports.startGame = async (req, res) => {
     });
 };
 
-// Submit answer
-exports.submitAnswer = async (req, res) => {
+exports.submitAnswer = 
+/**
+ * @brief Submit answer to the game
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
+async (req, res) => {
     const { game_id } = req.params;
     const { answer } = req.body;
 
-    const game = await Game.findById(game_id);
-    if (!game) return res.status(404).json({ error: "Game not found" });
-
-    const timeTaken = (Date.now() - game.timeStarted) / 1000;
+    if (!answer || typeof answer !== 'number') {
+        return res.status(400).json({ error: "Invalid input" });
+    }
+    let game;
+    try {
+        game = await Game.findById(game_id);
+        if (!game) {
+            return res.status(404).json({ error: "Game not found" });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: "Failed to retrieve game" });
+    }
+    const timeTaken = (Date.now() - game.timeStarted.getTime()) / 1000;
     const correct = answer === game.answer;
-
     game.history.push({
         question: game.question,
         givenAnswer: answer,
         correct,
         timeTaken,
     });
-
-    if (correct) game.score += 1;
-    
-    await game.save();
-
+    if (correct) {
+        game.score += 1;
+    }
+    try {
+        await game.save();
+    } catch (error) {
+        return res.status(500).json({ error: "Failed to save game" });
+    }
+    const currentScore = game.history.length > 0 ? game.score / game.history.length : 0;
     res.json({
-        result: correct
-            ? `Good job ${game.name}, your answer is correct!`
-            : `Sorry ${game.name}, your answer is incorrect.`,
+        result: correct ? 
+            `Good job ${game.name}, your answer is correct!` : 
+            `Sorry ${game.name}, your answer is incorrect.`,
         time_taken: timeTaken,
-        current_score: game.score / game.history.length,
+        current_score: currentScore,
         history: game.history,
     });
 };
 
-// Get game status
-exports.getGameStatus = async (req, res) => {
+exports.getGameStatus = 
+/**
+ * @brief Get the current status of a game
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
+async (req, res) => {
     const { game_id } = req.params;
-    const game = await Game.findById(game_id);
-    if (!game) return res.status(404).json({ error: "Game not found" });
 
-    const total_time_spent = game.history.reduce((acc, h) => acc + h.timeTaken, 0);
+    let game;
+    try {
+        game = await Game.findById(game_id);
+        if (!game) {
+            return res.status(404).json({ error: "Game not found" });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: "Failed to retrieve game" });
+    }
+
+    const currentScore = game.history.length > 0 ? game.score / game.history.length : 0;
+    const totalTimeSpent = game.history.reduce((total, round) => total + round.timeTaken, 0);
 
     res.json({
         name: game.name,
         difficulty: game.difficulty,
-        current_score: game.score / game.history.length,
-        total_time_spent,
-        history: game.history,
+        current_score: currentScore,
+        total_time_spent: totalTimeSpent,
+        history: game.history
     });
 };

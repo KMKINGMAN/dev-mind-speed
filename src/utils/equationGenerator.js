@@ -1,28 +1,65 @@
-const generateEquation = (difficulty) => {
-    const operations = ["+", "-", "*", "/"];
-    let operands = [];
-    let equation = "";
+const OPERATIONS = ["+", "-", "*", "/"];
 
-    const numOperands = difficulty + 1;
-    for (let i = 0; i < numOperands; i++) {
-        operands.push(Math.floor(Math.random() * Math.pow(10, difficulty)));
-    }
+/**
+ * Generates a random number based on difficulty level
+ * @param {number} difficulty - Difficulty level
+ * @returns {number} Random number
+ */
+const generateRandomNumber = (difficulty) => {
+    return Math.floor(Math.random() * Math.pow(10, difficulty));
+};
 
-    for (let i = 0; i < numOperands - 1; i++) {
-        equation += `${operands[i]} ${operations[Math.floor(Math.random() * operations.length)]} `;
-    }
-    equation += operands[numOperands - 1];
+/**
+ * Generates random operands array
+ * @param {number} count - Number of operands needed
+ * @param {number} difficulty - Difficulty level
+ * @returns {number[]} Array of operands
+ */
+const generateOperands = (count, difficulty) => {
+    return Array(count).fill(0).map(() => generateRandomNumber(difficulty));
+};
 
-    let answer;
+/**
+ * Builds equation string from operands and operations
+ * @param {number[]} operands - Array of numbers
+ * @returns {string} Formatted equation string
+ */
+const buildEquation = (operands) => {
+    return operands.reduce((equation, operand, index) => {
+        if (index === operands.length - 1) return equation + operand;
+        const operation = OPERATIONS[Math.floor(Math.random() * OPERATIONS.length)];
+        return equation + operand + " " + operation + " ";
+    }, "");
+};
+
+/**
+ * Calculates the result of the equation
+ * @param {string} equation - Math equation string
+ * @returns {string} Calculated result or "Error"
+ */
+const calculateResult = (equation) => {
     try {
-        answer = eval(equation).toFixed(2); // Round answer for precision
-    } catch (error) {
-        answer = "Error";
+        const result = eval(equation);
+        return Number.isFinite(result) ? result.toFixed(2) : "Error";
+    } catch {
+        return "Error";
     }
+};
+
+/**
+ * Generates a math equation based on difficulty level
+ * @param {number} difficulty - Difficulty level
+ * @returns {Object} Object containing question and answer
+ */
+const generateEquation = (difficulty) => {
+    const numOperands = difficulty + 1;
+    const operands = generateOperands(numOperands, difficulty);
+    const equation = buildEquation(operands);
+    const answer = calculateResult(equation);
 
     return {
         question: equation,
-        answer,
+        answer
     };
 };
 
