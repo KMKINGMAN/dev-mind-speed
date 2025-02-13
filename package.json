@@ -1,10 +1,10 @@
 {
   "name": "dev-mind-speed",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "description": "this is just a task that CIRCA Dev ask me for",
-  "main": "src/index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "node src/index.js"
+    "start": "node server.js"
   },
   "author": "",
   "license": "ISC",
