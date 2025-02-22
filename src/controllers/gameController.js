@@ -22,13 +22,14 @@ async (req, res) => {
         return res.status(400).json({ error: "Failed to generate equation" });
     }
 
+    let game;
     try {
-        const game = await Game.create({ name, difficulty, question, answer })
+        game = await Game.create({ name, difficulty, question, answer })
     }
     catch (error) {
         return res.status(500).json({ error: "Failed to create game" });
     }
-    
+
     res.json({
         message: `Hello ${name}, find your submit API URL below`,
         submit_url: `/game/${game._id}/submit`,
