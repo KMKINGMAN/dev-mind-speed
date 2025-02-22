@@ -43,7 +43,7 @@ async (req, res) => {
     const { game_id } = req.params;
     const { answer } = req.body;
 
-    if (!answer || typeof answer !== 'number') {
+    if (!("answer" in req.body) || typeof answer !== 'number' ) {
         return res.status(400).json({ error: "Invalid input" });
     }
     let game;
